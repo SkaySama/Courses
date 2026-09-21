@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liste de Courses Leclerc & Intermarché</title>
+    <title>Liste de Courses IA & Leclerc/Intermarché</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     
@@ -254,6 +254,14 @@
 
         .actions-bar { display: flex; gap: 8px; margin-top: 4px; }
         .actions-bar .btn { flex: 1; }
+
+        .ai-status {
+            font-size: 11px;
+            color: var(--primary);
+            font-style: italic;
+            white-space: nowrap;
+            margin-left: 6px;
+        }
     </style>
 </head>
 <body>
@@ -279,7 +287,7 @@
     <div id="app-container" class="container hidden">
         <header>
             <div>
-                <h1>🛒 Ma Liste de Courses</h1>
+                <h1>🛒 Ma Liste IA (Leclerc / Intermarché)</h1>
                 <div class="subtitle" id="user-display">Connecté</div>
             </div>
             <div style="display: flex; gap: 6px;">
@@ -325,31 +333,19 @@
         const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         const categoriesList = ['Fruits & Légumes', 'Frais & Boucherie', 'Épicerie', 'Boissons', 'Entretien & Hygiene', 'Divers'];
 
-        // Grand catalogue intelligent axé E.Leclerc & Intermarché
+        // Catalogue local de base (E.Leclerc / Intermarché)
         const productCatalog = [
             { name: 'Eco+ - Œufs x6', category: 'Frais & Boucherie', price: 1.65, qty: '6 p.' },
-            { name: 'Eco+ - Œufs x12', category: 'Frais & Boucherie', price: 2.99, qty: '12 p.' },
-            { name: 'Marque Repère - Lait demi-écrémé (Pack 6L)', category: 'Frais & Boucherie', price: 6.90, qty: '6L' },
-            { name: 'Marque Repère - Lait demi-écrémé (Bouteille 1L)', category: 'Frais & Boucherie', price: 0.98, qty: '1L' },
+            { name: 'Marque Repère - Lait demi-écrémé (Pack 1L)', category: 'Frais & Boucherie', price: 0.98, qty: '1L' },
             { name: 'Éco+ - Pâtes Coquillettes 1kg', category: 'Épicerie', price: 0.75, qty: '1 kg' },
-            { name: 'Éco+ - Pâtes Spaghettis 1kg', category: 'Épicerie', price: 0.75, qty: '1 kg' },
             { name: 'Marque Repère - Riz basmati 1kg', category: 'Épicerie', price: 1.85, qty: '1 kg' },
             { name: 'Cristaline - Eau de source (Pack 6x1.5L)', category: 'Boissons', price: 1.60, qty: '6x1.5L' },
             { name: 'Monique Ranou - Poulet escalopes', category: 'Frais & Boucherie', price: 6.20, qty: '500g' },
-            { name: 'Monique Ranou - Steaks hachés 15% MG', category: 'Frais & Boucherie', price: 4.50, qty: '4 p.' },
-            { name: 'Marque Repère - Papier toilette compact', category: 'Entretien & Hygiene', price: 3.50, qty: '6 rouleaux' },
-            { name: 'Marque Repère - Café moulu Arabica', category: 'Épicerie', price: 3.80, qty: '250g' },
-            { name: 'Paturages - Beurre doux 250g', category: 'Frais & Boucherie', price: 2.15, qty: '250g' },
-            { name: 'Paturages - Emmental râpé 200g', category: 'Frais & Boucherie', price: 1.89, qty: '200g' },
-            { name: 'Coca-Cola 1.5L', category: 'Boissons', price: 2.30, qty: '1.5L' },
-            { name: 'Le Chat - Lessive liquide', category: 'Entretien & Hygiene', price: 6.90, qty: '1 bidon' },
-            { name: 'Bananes (Vrac)', category: 'Fruits & Légumes', price: 1.85, qty: '1 kg' },
-            { name: 'Tomates rondes', category: 'Fruits & Légumes', price: 2.40, qty: '1 kg' },
-            { name: 'Salade Laitue', category: 'Fruits & Légumes', price: 1.10, qty: '1 pièce' }
+            { name: 'Paturages - Beurre doux 250g', category: 'Frais & Boucherie', price: 2.15, qty: '250g' }
         ];
 
         const defaultItems = [
-            { id: 1, name: 'Marque Repère - Lait demi-écrémé (Bouteille 1L)', category: 'Frais & Boucherie', qty: '1L', price: 0.98, checked: false },
+            { id: 1, name: 'Marque Repère - Lait demi-écrémé (Pack 1L)', category: 'Frais & Boucherie', qty: '1L', price: 0.98, checked: false },
             { id: 2, name: 'Eco+ - Œufs x6', category: 'Frais & Boucherie', qty: '6 p.', price: 1.65, checked: false }
         ];
 
@@ -418,9 +414,10 @@
                     <div class="item-top">
                         <input type="checkbox" class="input-checkbox" ${item.checked ? 'checked' : ''} onchange="toggleCheck(${idx}, this.checked)">
                         <div style="position:relative; width: 100%;">
-                            <input type="text" class="input-text item-name" id="name-input-${idx}" value="${escapeHtml(item.name)}" placeholder="Rechercher (ex: oeuf, lait, coca...)" oninput="handleSearchInput(${idx}, this.value)" autocomplete="off">
+                            <input type="text" class="input-text item-name" id="name-input-${idx}" value="${escapeHtml(item.name)}" placeholder="Tape un produit (ex: oeuf, coca, brioche...)" oninput="handleSearchInput(${idx}, this.value)" autocomplete="off">
                             <div class="suggestions-box hidden" id="suggestions-${idx}"></div>
                         </div>
+                        <span id="ai-status-${idx}" class="ai-status"></span>
                     </div>
                     <div class="item-bottom">
                         <select class="input-select" id="cat-input-${idx}" onchange="updateItem(${idx}, 'category', this.value)">
@@ -436,33 +433,19 @@
             renderMetrics();
         }
 
-        // Normaliseur intelligent (neutralise les accents et gère oe <-> œ pour ne plus bloquer "oeuf")
+        // Normaliseur intelligent (accents + gestion oe / œ pour "oeuf")
         function normalizeStr(str) {
             if (!str) return '';
-            return str.toLowerCase()
-                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-                .replace(/oe/g, "œ");
+            return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/oe/g, "œ");
         }
 
-        // Détection automatique de la pré-catégorie
-        function detectCategory(name) {
-            const n = normalizeStr(name);
-            if (n.match(/lait|oeuf|œuf|beurre|fromage|yaourt|creme|steak|poulet|jambon|viande|lardons/)) return 'Frais & Boucherie';
-            if (n.match(/pomme|banane|salade|tomate|carotte|legume|fruit|avocat|oignon/)) return 'Fruits & Légumes';
-            if (n.match(/eau|coca|soda|jus|biere|vin|boisson|sirop/)) return 'Boissons';
-            if (n.match(/papier|lessive|savon|shampoing|dentifrice|gel|nettoyant/)) return 'Entretien & Hygiene';
-            return 'Épicerie';
-        }
-
-        // Recherche instantanée pendant la frappe avec support parfait de "oeuf" / "œuf"
+        // Recherche instantanée dans le catalogue local
         function handleSearchInput(index, query) {
             items[index].name = query;
-            items[index].category = detectCategory(query);
-            document.getElementById(`cat-input-${index}`).value = items[index].category;
             renderMetrics();
 
             const box = document.getElementById(`suggestions-${index}`);
-            if (!query || query.trim().length < 1) {
+            if (!query || query.trim().length < 2) {
                 box.classList.add('hidden');
                 return;
             }
@@ -470,17 +453,16 @@
             const cleanQ = normalizeStr(query);
             const matches = productCatalog.filter(p => normalizeStr(p.name).includes(cleanQ));
 
-            if (matches.length === 0) {
+            if (matches.length > 0) {
+                box.innerHTML = matches.map(m => `
+                    <div class="suggestion-item" onclick="selectSuggestion(${index}, '${escapeHtml(m.name).replace(/'/g, "\\'")}', '${m.category}', ${m.price}, '${m.qty}')">
+                        ⭐ <strong>${m.name}</strong> <span style="color:var(--text-muted); font-size:11px;">(${m.price}€)</span>
+                    </div>
+                `).join('');
+                box.classList.remove('hidden');
+            } else {
                 box.classList.add('hidden');
-                return;
             }
-
-            box.innerHTML = matches.map(m => `
-                <div class="suggestion-item" onclick="selectSuggestion(${index}, '${escapeHtml(m.name).replace(/'/g, "\\'")}', '${m.category}', ${m.price}, '${m.qty}')">
-                    ⭐ <strong>${m.name}</strong> <span style="color:var(--text-muted); font-size:11px;">(${m.price}€)</span>
-                </div>
-            `).join('');
-            box.classList.remove('hidden');
         }
 
         function selectSuggestion(index, name, category, price, qty) {
@@ -493,7 +475,46 @@
             render();
         }
 
-        // Fermer la liste des suggestions si on clique ailleurs
+        // Interroge la fonction sécurisée Supabase Edge Function en arrière-plan
+        async function triggerAI(index, query) {
+            if (!query || query.trim().length < 2) return;
+            
+            const statusSpan = document.getElementById(`ai-status-${index}`);
+            statusSpan.textContent = "🤖 IA...";
+
+            try {
+                const { data, error } = await sbClient.functions.invoke('ai-parse-item', {
+                    body: { query }
+                });
+
+                if (error) throw error;
+
+                if (data) {
+                    items[index].name = data.name || query;
+                    items[index].category = data.category || 'Épicerie';
+                    items[index].qty = data.qty || '1';
+                    items[index].price = data.price || 1.00;
+                    
+                    statusSpan.textContent = "✨ OK";
+                    setTimeout(() => statusSpan.textContent = "", 1500);
+                    render();
+                }
+            } catch (err) {
+                console.error("Erreur IA Supabase:", err);
+                statusSpan.textContent = "";
+            }
+        }
+
+        // Déclencheur automatique de l'IA quand on quitte le champ de texte
+        document.addEventListener('blur', (e) => {
+            if (e.target.classList.contains('item-name')) {
+                const idx = e.target.id.split('-').pop();
+                const val = e.target.value;
+                setTimeout(() => triggerAI(idx, val), 250);
+            }
+        }, true);
+
+        // Fermer les suggestions au clic extérieur
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.item-top')) {
                 document.querySelectorAll('.suggestions-box').forEach(b => b.classList.add('hidden'));
