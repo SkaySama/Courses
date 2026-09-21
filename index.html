@@ -354,7 +354,7 @@
         function getGroqKey() {
             let key = localStorage.getItem('groq_api_key');
             if (!key) {
-                key = prompt("Entre ta clé API Groq pour activer l'intelligence artificielle :");
+                key = prompt("Entre ta clé API Groq (gsk_...) pour activer l'intelligence artificielle :");
                 if (key) {
                     localStorage.setItem('groq_api_key', key.trim());
                 }
@@ -510,7 +510,7 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        model: 'llama-3.1-8b-instant', // Modèle mis à jour et actif
+                        model: 'llama-3.1-8b-instant', // Modèle actif validé sur l'API Groq
                         messages: [
                             {
                                 role: 'system',
@@ -525,9 +525,15 @@
                     })
                 });
 
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
                 const data = await response.json();
-                if (data.choices && data.choices[0]) {
-                    const result = JSON.parse(data.choices[0].message.content);
+                if (data.choices && data.choices[0] && data.choices[0].message) {
+                    const contentStr = data.choices[0].message.content;
+                    const result = JSON.parse(contentStr);
+                    
                     items[index].name = result.name || query;
                     items[index].category = result.category || 'Épicerie';
                     items[index].qty = result.qty || '1';
@@ -537,7 +543,7 @@
                     setTimeout(() => statusSpan.textContent = "", 1500);
                     render();
                 } else {
-                    throw new Error("Réponse vide");
+                    throw new Error("Structure de réponse invalide");
                 }
             } catch (err) {
                 console.error("Erreur IA:", err);
@@ -555,7 +561,7 @@
         }, true);
 
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('.item-top')) {
+            *if (!e.target.closest('.item-top')) {
                 document.querySelectorAll('.suggestions-box').forEach(b => b.classList.add('hidden'));
             }
         });
