@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liste de Courses Mobile</title>
+    <title>Liste de Courses Intelligente & Suggestions</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     
@@ -144,7 +144,6 @@
 
         .card-title { font-size: 16px; font-weight: 600; }
 
-        /* Liste d'articles optimisée mobile (style cartes) */
         .items-list {
             display: flex;
             flex-direction: column;
@@ -175,18 +174,19 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            position: relative;
         }
 
         .item-bottom {
             display: grid;
-            grid-template-columns: 1fr 80px 80px 36px;
+            grid-template-columns: 1fr 75px 75px 36px;
             gap: 6px;
             align-items: center;
         }
 
         @media (max-width: 480px) {
             .item-bottom {
-                grid-template-columns: 1fr 70px 70px 32px;
+                grid-template-columns: 1fr 65px 65px 32px;
                 gap: 4px;
             }
         }
@@ -197,7 +197,7 @@
             color: var(--text);
             padding: 8px 10px;
             border-radius: var(--radius-sm);
-            font-size: 14px; /* Évite le zoom automatique sur iOS */
+            font-size: 14px;
             font-family: inherit;
             width: 100%;
         }
@@ -205,6 +205,33 @@
         .input-text:focus, .input-num:focus, .input-select:focus { outline: none; border-color: var(--primary); }
         .input-num { text-align: right; font-family: var(--ff-mono); }
         .input-checkbox { width: 22px; height: 22px; cursor: pointer; accent-color: var(--primary); flex-shrink: 0; }
+
+        /* Style pour les suggestions automatiques */
+        .suggestions-box {
+            position: absolute;
+            top: 100%;
+            left: 32px;
+            right: 0;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            z-index: 50;
+            max-height: 150px;
+            overflow-y: auto;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5);
+        }
+
+        .suggestion-item {
+            padding: 8px 12px;
+            font-size: 13px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .suggestion-item:hover {
+            background: var(--surface-hover);
+            color: var(--primary);
+        }
 
         .btn {
             display: inline-flex;
@@ -300,11 +327,32 @@
 
         const categoriesList = ['Fruits & Légumes', 'Frais & Boucherie', 'Épicerie', 'Boissons', 'Entretien & Hygiene', 'Divers'];
 
+        // Base de suggestions type Leclerc (nom, catégorie, prix estimé de base, quantité type)
+        const productCatalog = [
+            { name: 'Céréales Muesli / Chocapic', category: 'Épicerie', price: 3.50, qty: '1 paq' },
+            { name: 'Lait demi-écrémé (Pack)', category: 'Frais & Boucherie', price: 1.20, qty: '1L' },
+            { name: 'Œufs bio x6', category: 'Frais & Boucherie', price: 2.30, qty: '6 p.' },
+            { name: 'Pâtes Penne / Coquillettes', category: 'Épicerie', price: 1.10, qty: '1 kg' },
+            { name: 'Riz basmati', category: 'Épicerie', price: 2.20, qty: '1 kg' },
+            { name: 'Pack d’eau Cristaline', category: 'Boissons', price: 1.80, qty: '6x1.5L' },
+            { name: 'Poulet escalopes', category: 'Frais & Boucherie', price: 6.50, qty: '500g' },
+            { name: 'Steaks hachés 15% MG', category: 'Frais & Boucherie', price: 4.90, qty: '4 p.' },
+            { name: 'Papier toilette', category: 'Entretien & Hygiene', price: 3.90, qty: '6 rouleaux' },
+            { name: 'Café moulu', category: 'Épicerie', price: 4.20, qty: '250g' },
+            { name: 'Beurre doux', category: 'Frais & Boucherie', price: 2.40, qty: '250g' },
+            { name: 'Emmental râpé', category: 'Frais & Boucherie', price: 2.10, qty: '200g' },
+            { name: 'Coca-Cola / Soda', category: 'Boissons', price: 2.50, qty: '1.5L' },
+            { name: 'Lessive liquide', category: 'Entretien & Hygiene', price: 7.50, qty: '1 bidon' },
+            { name: 'Bananes', category: 'Fruits & Légumes', price: 1.90, qty: '1 kg' },
+            { name: 'Tomates rondes', category: 'Fruits & Légumes', price: 2.50, qty: '1 kg' },
+            { name: 'Salade / Laitue', category: 'Fruits & Légumes', price: 1.20, qty: '1 pièce' }
+        ];
+
         const defaultItems = [
-            { id: 1, name: 'Lait demi-écrémé', category: 'Frais & Boucherie', qty: '1L', price: 1.20, checked: false },
-            { id: 2, name: 'Œufs bio', category: 'Frais & Boucherie', qty: '1 boîte', price: 3.50, checked: false },
-            { id: 3, name: 'Pâtes penne', category: 'Épicerie', qty: '1 kg', price: 1.80, checked: true },
-            { id: 4, name: 'Pack d’eau', category: 'Boissons', qty: '6x1.5L', price: 2.10, checked: false }
+            { id: 1, name: 'Lait demi-écrémé (Pack)', category: 'Frais & Boucherie', qty: '1L', price: 1.20, checked: false },
+            { id: 2, name: 'Œufs bio x6', category: 'Frais & Boucherie', qty: '6 p.', price: 2.30, checked: false },
+            { id: 3, name: 'Pâtes Penne / Coquillettes', category: 'Épicerie', qty: '1 kg', price: 1.10, checked: true },
+            { id: 4, name: 'Pack d’eau Cristaline', category: 'Boissons', qty: '6x1.5L', price: 1.80, checked: false }
         ];
 
         let items = [];
@@ -386,20 +434,67 @@
                 div.innerHTML = `
                     <div class="item-top">
                         <input type="checkbox" class="input-checkbox" ${item.checked ? 'checked' : ''} onchange="toggleCheck(${idx}, this.checked)">
-                        <input type="text" class="input-text item-name" value="${escapeHtml(item.name)}" placeholder="Nom de l'article" onchange="updateItem(${idx}, 'name', this.value)">
+                        <div style="position:relative; width: 100%;">
+                            <input type="text" class="input-text item-name" id="name-input-${idx}" value="${escapeHtml(item.name)}" placeholder="Commencer à écrire (ex: céréale...)" oninput="handleInputSearch(${idx}, this.value)" onfocus="handleInputSearch(${idx}, this.value)" autocomplete="off">
+                            <div class="suggestions-box hidden" id="suggestions-${idx}"></div>
+                        </div>
                     </div>
                     <div class="item-bottom">
-                        <select class="input-select" onchange="updateItem(${idx}, 'category', this.value)">
+                        <select class="input-select" id="cat-input-${idx}" onchange="updateItem(${idx}, 'category', this.value)">
                             ${optionsHtml}
                         </select>
-                        <input type="text" class="input-text" style="text-align: center;" value="${escapeHtml(item.qty || '')}" placeholder="Qté" onchange="updateItem(${idx}, 'qty', this.value)">
-                        <input type="number" class="input-num" value="${item.price || 0}" step="0.05" onchange="updateItem(${idx}, 'price', parseFloat(this.value) || 0)">
+                        <input type="text" class="input-text" id="qty-input-${idx}" style="text-align: center;" value="${escapeHtml(item.qty || '')}" placeholder="Qté" onchange="updateItem(${idx}, 'qty', this.value)">
+                        <input type="number" class="input-num" id="price-input-${idx}" value="${item.price || 0}" step="0.05" onchange="updateItem(${idx}, 'price', parseFloat(this.value) || 0)">
                         <button class="btn-danger" onclick="deleteRow(${idx})" title="Supprimer">✕</button>
                     </div>
                 `;
                 container.appendChild(div);
             });
         }
+
+        // Gestion de l'autocomplétion en direct
+        function handleInputSearch(index, query) {
+            items[index].name = query;
+            renderMetrics();
+
+            const box = document.getElementById(`suggestions-${index}`);
+            if (!query || query.trim().length === 0) {
+                box.classList.add('hidden');
+                return;
+            }
+
+            const qLower = query.toLowerCase();
+            const matches = productCatalog.filter(p => p.name.toLowerCase().includes(qLower));
+
+            if (matches.length === 0) {
+                box.classList.add('hidden');
+                return;
+            }
+
+            box.innerHTML = matches.map(m => `
+                <div class="suggestion-item" onclick="selectSuggestion(${index}, '${escapeHtml(m.name).replace(/'/g, "\\'")}', '${m.category}', ${m.price}, '${m.qty}')">
+                    <strong>${m.name}</strong> <span style="color:var(--text-muted); font-size:11px;">(${m.category} - ${m.price}€)</span>
+                </div>
+            `).join('');
+            box.classList.remove('hidden');
+        }
+
+        function selectSuggestion(index, name, category, price, qty) {
+            items[index].name = name;
+            items[index].category = category;
+            items[index].price = price;
+            items[index].qty = qty;
+
+            document.getElementById(`suggestions-${index}`).classList.add('hidden');
+            render(); // Met à jour toute la ligne et les totaux
+        }
+
+        // Fermer les suggestions si on clique ailleurs sur la page
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.item-top')) {
+                document.querySelectorAll('.suggestions-box').forEach(b => b.classList.add('hidden'));
+            }
+        });
 
         function renderMetrics() {
             const totalEst = items.reduce((sum, item) => sum + (item.price || 0), 0);
@@ -451,6 +546,7 @@
         }
 
         function escapeHtml(str) {
+            if (!str) return '';
             return str.replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
         }
     </script>
