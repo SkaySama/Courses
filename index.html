@@ -216,7 +216,7 @@
             border: 1px solid var(--border);
             border-radius: var(--radius-sm);
             z-index: 50;
-            max-height: 180px;
+            max-height: 200px;
             overflow-y: auto;
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5);
         }
@@ -330,32 +330,31 @@
 
         const categoriesList = ['Fruits & Légumes', 'Frais & Boucherie', 'Épicerie', 'Boissons', 'Entretien & Hygiene', 'Divers'];
 
-        // Catalogue local de secours / essentiels
+        // Catalogue local axé prioritairement sur E.Leclerc (Marque Repère / Eco+) et Intermarché (Paturages / Monique Ranou)
         const productCatalog = [
-            { name: 'Céréales Muesli / Chocapic', category: 'Épicerie', price: 3.50, qty: '1 paq' },
-            { name: 'Lait demi-écrémé (Pack)', category: 'Frais & Boucherie', price: 1.20, qty: '1L' },
-            { name: 'Œufs bio x6', category: 'Frais & Boucherie', price: 2.30, qty: '6 p.' },
-            { name: 'Pâtes Penne / Coquillettes', category: 'Épicerie', price: 1.10, qty: '1 kg' },
-            { name: 'Riz basmati', category: 'Épicerie', price: 2.20, qty: '1 kg' },
-            { name: 'Pack d’eau Cristaline', category: 'Boissons', price: 1.80, qty: '6x1.5L' },
-            { name: 'Poulet escalopes', category: 'Frais & Boucherie', price: 6.50, qty: '500g' },
-            { name: 'Steaks hachés 15% MG', category: 'Frais & Boucherie', price: 4.90, qty: '4 p.' },
-            { name: 'Papier toilette', category: 'Entretien & Hygiene', price: 3.90, qty: '6 rouleaux' },
-            { name: 'Café moulu', category: 'Épicerie', price: 4.20, qty: '250g' },
-            { name: 'Beurre doux', category: 'Frais & Boucherie', price: 2.40, qty: '250g' },
-            { name: 'Emmental râpé', category: 'Frais & Boucherie', price: 2.10, qty: '200g' },
-            { name: 'Coca-Cola / Soda', category: 'Boissons', price: 2.50, qty: '1.5L' },
-            { name: 'Lessive liquide', category: 'Entretien & Hygiene', price: 7.50, qty: '1 bidon' },
-            { name: 'Bananes', category: 'Fruits & Légumes', price: 1.90, qty: '1 kg' },
-            { name: 'Tomates rondes', category: 'Fruits & Légumes', price: 2.50, qty: '1 kg' },
-            { name: 'Salade / Laitue', category: 'Fruits & Légumes', price: 1.20, qty: '1 pièce' }
+            { name: 'Marque Repère - Lait demi-écrémé (Pack)', category: 'Frais & Boucherie', price: 1.15, qty: '1L' },
+            { name: 'Eco+ - Œufs x6', category: 'Frais & Boucherie', price: 1.65, qty: '6 p.' },
+            { name: 'Éco+ - Pâtes Coquillettes', category: 'Épicerie', price: 0.75, qty: '1 kg' },
+            { name: 'Marque Repère - Riz basmati', category: 'Épicerie', price: 1.85, qty: '1 kg' },
+            { name: 'Cristaline - Eau de source (Pack)', category: 'Boissons', price: 1.60, qty: '6x1.5L' },
+            { name: 'Monique Ranou - Poulet escalopes', category: 'Frais & Boucherie', price: 6.20, qty: '500g' },
+            { name: 'Monique Ranou - Steaks hachés 15% MG', category: 'Frais & Boucherie', price: 4.50, qty: '4 p.' },
+            { name: 'Marque Repère - Papier toilette compact', category: 'Entretien & Hygiene', price: 3.50, qty: '6 rouleaux' },
+            { name: 'Marque Repère - Café moulu Arabica', category: 'Épicerie', price: 3.80, qty: '250g' },
+            { name: 'Paturages - Beurre doux', category: 'Frais & Boucherie', price: 2.15, qty: '250g' },
+            { name: 'Paturages - Emmental râpé', category: 'Frais & Boucherie', price: 1.89, qty: '200g' },
+            { name: 'Coca-Cola', category: 'Boissons', price: 2.30, qty: '1.5L' },
+            { name: 'Le Chat / Formil - Lessive liquide', category: 'Entretien & Hygiene', price: 6.90, qty: '1 bidon' },
+            { name: 'Bananes (Vrac)', category: 'Fruits & Légumes', price: 1.85, qty: '1 kg' },
+            { name: 'Tomates rondes', category: 'Fruits & Légumes', price: 2.40, qty: '1 kg' },
+            { name: 'Salade Laitue', category: 'Fruits & Légumes', price: 1.10, qty: '1 pièce' }
         ];
 
         const defaultItems = [
-            { id: 1, name: 'Lait demi-écrémé (Pack)', category: 'Frais & Boucherie', qty: '1L', price: 1.20, checked: false },
-            { id: 2, name: 'Œufs bio x6', category: 'Frais & Boucherie', qty: '6 p.', price: 2.30, checked: false },
-            { id: 3, name: 'Pâtes Penne / Coquillettes', category: 'Épicerie', qty: '1 kg', price: 1.10, checked: true },
-            { id: 4, name: 'Pack d’eau Cristaline', category: 'Boissons', qty: '6x1.5L', price: 1.80, checked: false }
+            { id: 1, name: 'Marque Repère - Lait demi-écrémé (Pack)', category: 'Frais & Boucherie', qty: '1L', price: 1.15, checked: false },
+            { id: 2, name: 'Eco+ - Œufs x6', category: 'Frais & Boucherie', qty: '6 p.', price: 1.65, checked: false },
+            { id: 3, name: 'Éco+ - Pâtes Coquillettes', category: 'Épicerie', qty: '1 kg', price: 0.75, checked: true },
+            { id: 4, name: 'Cristaline - Eau de source (Pack)', category: 'Boissons', qty: '6x1.5L', price: 1.60, checked: false }
         ];
 
         let items = [];
@@ -456,17 +455,31 @@
             });
         }
 
-        // Normaliseur intelligent pour gérer les accents et "oe" <-> "œ" (ex: oeuf / œuf)
+        // Normaliseur intelligent (accents + gestion oe / œ)
         function normalizeString(str) {
             if (!str) return '';
             return str.toLowerCase()
-                .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Supprime les accents
-                .replace(/oe/g, "œ"); // Unifie oe et œ
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                .replace(/oe/g, "œ");
         }
 
-        // Gestion hybride : Recherche locale + API Open Food Facts en direct
+        // Détection automatique de la pré-catégorie selon le texte saisi
+        function detectCategory(name) {
+            const n = normalizeString(name);
+            if (n.match(/lait|oeuf|œuf|beurre|fromage|yaourt|creme|steak|poulet|jambon|viande|boucherie|lardons|surimi/)) return 'Frais & Boucherie';
+            if (n.match(/pomme|banane|salade|tomate|carotte|legume|fruit|avocat|oignon|courgette|poivron/)) return 'Fruits & Légumes';
+            if (n.match(/eau|coca|soda|jus|biere|vin|boisson|sirop|limonade|schweppes/)) return 'Boissons';
+            if (n.match(/papier|lessive|savon|shampoing|dentifrice|gel|nettoyant|eponge|sac poubelle|vaisselle/)) return 'Entretien & Hygiene';
+            if (n.match(/patte|pate|riz|cafe|sucre|farine|cereale|huile|chocolat|biscuits|conserve|sel/)) return 'Épicerie';
+            return 'Épicerie'; // Défaut
+        }
+
+        // Recherche rapide locale + API ultra-réactive
         function handleInputSearch(index, query) {
             items[index].name = query;
+            // Pré-catégorisation dynamique à la volée
+            items[index].category = detectCategory(query);
+            document.getElementById(`cat-input-${index}`).value = items[index].category;
             renderMetrics();
 
             const box = document.getElementById(`suggestions-${index}`);
@@ -477,10 +490,9 @@
 
             const cleanQ = normalizeString(query);
 
-            // 1. Filtrer d'abord dans le catalogue local (avec la normalisation oe/œ/accents)
+            // Filtrage local prioritaire
             const localMatches = productCatalog.filter(p => normalizeString(p.name).includes(cleanQ));
 
-            // Affichage immédiat des résultats locaux
             let htmlContent = localMatches.map(m => `
                 <div class="suggestion-item" onclick="selectSuggestion(${index}, '${escapeHtml(m.name).replace(/'/g, "\\'")}', '${m.category}', ${m.price}, '${m.qty}')">
                     <span>⭐ <strong>${m.name}</strong> <span style="color:var(--text-muted); font-size:11px;">(${m.category})</span></span>
@@ -491,15 +503,15 @@
                 box.innerHTML = htmlContent;
                 box.classList.remove('hidden');
             } else {
-                box.innerHTML = '<div class="suggestion-item" style="color:var(--text-muted); cursor:default;">Recherche en ligne...</div>';
+                box.innerHTML = '<div class="suggestion-item" style="color:var(--text-muted); cursor:default;">Recherche rapide en ligne...</div>';
                 box.classList.remove('hidden');
             }
 
-            // 2. Interroger l'API Open Food Facts en arrière-plan (avec anti-spam debounce de 350ms)
+            // API Open Food Facts optimisée et rapide (debounce abaissé à 200ms)
             clearTimeout(searchTimeouts[index]);
             searchTimeouts[index] = setTimeout(async () => {
                 try {
-                    const url = `https://fr.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(cleanQ)}&search_simple=1&action=process&json=1&page_size=6`;
+                    const url = `https://fr.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(cleanQ)}&search_simple=1&action=process&json=1&page_size=5`;
                     const response = await fetch(url);
                     const data = await response.json();
 
@@ -508,24 +520,25 @@
                             const pName = prod.product_name_fr || prod.product_name;
                             if (!pName) return '';
                             const brand = prod.brands ? `(${prod.brands})` : '';
-                            const img = prod.image_small_url ? `<img src="${prod.image_small_url}" width="24" height="24" style="object-fit:contain; border-radius:4px;">` : '📦';
+                            const img = prod.image_small_url ? `<img src="${prod.image_small_url}" width="24" height="24" style="object-fit:contain; border-radius:4px;">` : '🛒';
+                            const guessedCat = detectCategory(pName);
                             
                             return `
-                                <div class="suggestion-item" onclick="selectSuggestion(${index}, '${escapeHtml(pName + ' ' + brand).replace(/'/g, "\\'")}', 'Épicerie', 2.00, '1')">
+                                <div class="suggestion-item" onclick="selectSuggestion(${index}, '${escapeHtml(pName + ' ' + brand).replace(/'/g, "\\'")}', '${guessedCat}', 2.00, '1')">
                                     ${img} <span>${pName} <span style="color:var(--text-muted); font-size:11px;">${brand}</span></span>
                                 </div>
                             `;
                         }).join('');
 
                         if (apiMatchesHtml) {
-                            box.innerHTML = htmlContent + '<div style="border-top:1px solid var(--border); font-size:10px; color:var(--text-muted); padding:4px 8px; text-transform:uppercase;">Résultats Open Food Facts</div>' + apiMatchesHtml;
+                            box.innerHTML = htmlContent + '<div style="border-top:1px solid var(--border); font-size:10px; color:var(--text-muted); padding:4px 8px; text-transform:uppercase;">Suggestions en ligne</div>' + apiMatchesHtml;
                             box.classList.remove('hidden');
                         }
                     }
                 } catch (e) {
-                    console.error("Erreur API Open Food Facts:", e);
+                    console.error("Erreur API:", e);
                 }
-            }, 350);
+            }, 200);
         }
 
         function selectSuggestion(index, name, category, price, qty) {
@@ -538,7 +551,7 @@
             render();
         }
 
-        // Fermer les suggestions si on clique ailleurs sur la page
+        // Fermer les suggestions si on clique ailleurs
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.item-top')) {
                 document.querySelectorAll('.suggestions-box').forEach(b => b.classList.add('hidden'));
