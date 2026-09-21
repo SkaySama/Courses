@@ -216,7 +216,7 @@
             border: 1px solid var(--border);
             border-radius: var(--radius-sm);
             z-index: 50;
-            max-height: 150px;
+            max-height: 180px;
             overflow-y: auto;
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5);
         }
@@ -226,6 +226,9 @@
             font-size: 13px;
             cursor: pointer;
             border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .suggestion-item:hover {
@@ -327,7 +330,7 @@
 
         const categoriesList = ['Fruits & Légumes', 'Frais & Boucherie', 'Épicerie', 'Boissons', 'Entretien & Hygiene', 'Divers'];
 
-        // Base de suggestions type Leclerc (nom, catégorie, prix estimé de base, quantité type)
+        // Catalogue local de secours / essentiels
         const productCatalog = [
             { name: 'Céréales Muesli / Chocapic', category: 'Épicerie', price: 3.50, qty: '1 paq' },
             { name: 'Lait demi-écrémé (Pack)', category: 'Frais & Boucherie', price: 1.20, qty: '1L' },
@@ -356,6 +359,7 @@
         ];
 
         let items = [];
+        let searchTimeouts = {};
 
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -435,7 +439,7 @@
                     <div class="item-top">
                         <input type="checkbox" class="input-checkbox" ${item.checked ? 'checked' : ''} onchange="toggleCheck(${idx}, this.checked)">
                         <div style="position:relative; width: 100%;">
-                            <input type="text" class="input-text item-name" id="name-input-${idx}" value="${escapeHtml(item.name)}" placeholder="Commencer à écrire (ex: céréale...)" oninput="handleInputSearch(${idx}, this.value)" onfocus="handleInputSearch(${idx}, this.value)" autocomplete="off">
+                            <input type="text" class="input-text item-name" id="name-input-${idx}" value="${escapeHtml(item.name)}" placeholder="Commencer à écrire (ex: oeuf, lait...)" oninput="handleInputSearch(${idx}, this.value)" onfocus="handleInputSearch(${idx}, this.value)" autocomplete="off">
                             <div class="suggestions-box hidden" id="suggestions-${idx}"></div>
                         </div>
                     </div>
@@ -452,41 +456,86 @@
             });
         }
 
-        // Gestion de l'autocomplétion en direct
+        // Normaliseur intelligent pour gérer les accents et "oe" <-> "œ" (ex: oeuf / œuf)
+        function normalizeString(str) {
+            if (!str) return '';
+            return str.toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Supprime les accents
+                .replace(/oe/g, "œ"); // Unifie oe et œ
+        }
+
+        // Gestion hybride : Recherche locale + API Open Food Facts en direct
         function handleInputSearch(index, query) {
             items[index].name = query;
             renderMetrics();
 
             const box = document.getElementById(`suggestions-${index}`);
-            if (!query || query.trim().length === 0) {
+            if (!query || query.trim().length < 2) {
                 box.classList.add('hidden');
                 return;
             }
 
-            const qLower = query.toLowerCase();
-            const matches = productCatalog.filter(p => p.name.toLowerCase().includes(qLower));
+            const cleanQ = normalizeString(query);
 
-            if (matches.length === 0) {
-                box.classList.add('hidden');
-                return;
-            }
+            // 1. Filtrer d'abord dans le catalogue local (avec la normalisation oe/œ/accents)
+            const localMatches = productCatalog.filter(p => normalizeString(p.name).includes(cleanQ));
 
-            box.innerHTML = matches.map(m => `
+            // Affichage immédiat des résultats locaux
+            let htmlContent = localMatches.map(m => `
                 <div class="suggestion-item" onclick="selectSuggestion(${index}, '${escapeHtml(m.name).replace(/'/g, "\\'")}', '${m.category}', ${m.price}, '${m.qty}')">
-                    <strong>${m.name}</strong> <span style="color:var(--text-muted); font-size:11px;">(${m.category} - ${m.price}€)</span>
+                    <span>⭐ <strong>${m.name}</strong> <span style="color:var(--text-muted); font-size:11px;">(${m.category})</span></span>
                 </div>
             `).join('');
-            box.classList.remove('hidden');
+
+            if (localMatches.length > 0) {
+                box.innerHTML = htmlContent;
+                box.classList.remove('hidden');
+            } else {
+                box.innerHTML = '<div class="suggestion-item" style="color:var(--text-muted); cursor:default;">Recherche en ligne...</div>';
+                box.classList.remove('hidden');
+            }
+
+            // 2. Interroger l'API Open Food Facts en arrière-plan (avec anti-spam debounce de 350ms)
+            clearTimeout(searchTimeouts[index]);
+            searchTimeouts[index] = setTimeout(async () => {
+                try {
+                    const url = `https://fr.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(cleanQ)}&search_simple=1&action=process&json=1&page_size=6`;
+                    const response = await fetch(url);
+                    const data = await response.json();
+
+                    if (data.products && data.products.length > 0) {
+                        const apiMatchesHtml = data.products.map(prod => {
+                            const pName = prod.product_name_fr || prod.product_name;
+                            if (!pName) return '';
+                            const brand = prod.brands ? `(${prod.brands})` : '';
+                            const img = prod.image_small_url ? `<img src="${prod.image_small_url}" width="24" height="24" style="object-fit:contain; border-radius:4px;">` : '📦';
+                            
+                            return `
+                                <div class="suggestion-item" onclick="selectSuggestion(${index}, '${escapeHtml(pName + ' ' + brand).replace(/'/g, "\\'")}', 'Épicerie', 2.00, '1')">
+                                    ${img} <span>${pName} <span style="color:var(--text-muted); font-size:11px;">${brand}</span></span>
+                                </div>
+                            `;
+                        }).join('');
+
+                        if (apiMatchesHtml) {
+                            box.innerHTML = htmlContent + '<div style="border-top:1px solid var(--border); font-size:10px; color:var(--text-muted); padding:4px 8px; text-transform:uppercase;">Résultats Open Food Facts</div>' + apiMatchesHtml;
+                            box.classList.remove('hidden');
+                        }
+                    }
+                } catch (e) {
+                    console.error("Erreur API Open Food Facts:", e);
+                }
+            }, 350);
         }
 
         function selectSuggestion(index, name, category, price, qty) {
             items[index].name = name;
             items[index].category = category;
-            items[index].price = price;
-            items[index].qty = qty;
+            if (price) items[index].price = price;
+            if (qty) items[index].qty = qty;
 
             document.getElementById(`suggestions-${index}`).classList.add('hidden');
-            render(); // Met à jour toute la ligne et les totaux
+            render();
         }
 
         // Fermer les suggestions si on clique ailleurs sur la page
