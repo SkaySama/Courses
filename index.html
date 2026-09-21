@@ -292,6 +292,7 @@
             </div>
             <div style="display: flex; gap: 6px;">
                 <button class="btn btn-secondary" onclick="saveData()">💾 Sauver</button>
+                <button class="btn btn-secondary" onclick="configureAI()" title="Configurer l'IA">⚙️ IA</button>
                 <button class="btn btn-logout" onclick="logout()">Quitter</button>
             </div>
         </header>
@@ -350,6 +351,27 @@
         ];
 
         let items = [];
+
+        // Gestion de la clé API stockée en local (zéro alerte GitHub)
+        function getGroqKey() {
+            let key = localStorage.getItem('groq_api_key');
+            if (!key) {
+                key = prompt("Entre ta clé API Groq pour activer l'intelligence artificielle :");
+                if (key) {
+                    localStorage.setItem('groq_api_key', key.trim());
+                }
+            }
+            return key;
+        }
+
+        function configureAI() {
+            const current = localStorage.getItem('groq_api_key') || '';
+            const newKey = prompt("Modifier la clé API Groq :", current);
+            if (newKey !== null) {
+                localStorage.setItem('groq_api_key', newKey.trim());
+                alert("Clé mise à jour !");
+            }
+        }
 
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -475,33 +497,55 @@
             render();
         }
 
-        // Interroge la fonction sécurisée Supabase Edge Function en arrière-plan
+        // Appel direct à l'IA de Groq sécurisé via le navigateur
         async function triggerAI(index, query) {
             if (!query || query.trim().length < 2) return;
             
+            const apiKey = getGroqKey();
+            if (!apiKey) return;
+
             const statusSpan = document.getElementById(`ai-status-${index}`);
             statusSpan.textContent = "🤖 IA...";
 
             try {
-                const { data, error } = await sbClient.functions.invoke('ai-parse-item', {
-                    body: { query }
+                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'llama-3.3-70b-versatile',
+                        messages: [
+                            {
+                                role: 'system',
+                                content: 'Tu es un assistant de courses en France. L’utilisateur écrit un produit (ex: "lait", "oeuf bio", "brioche"). Renvoie STRICTEMENT un objet JSON valide avec ces clés : "name" (nom propre du produit axé sur les enseignes E.Leclerc comme Marque Repère, Eco+ ou Intermarché si pertinent), "category" (doit être l’une de ces valeurs exactes : "Fruits & Légumes", "Frais & Boucherie", "Épicerie", "Boissons", "Entretien & Hygiene", "Divers"), "qty" (quantité type "1L", "6 p.", "1 kg", "1"), "price" (prix moyen estimé en hypermarché en euros sous forme de nombre ex: 1.50).'
+                            },
+                            {
+                                role: 'user',
+                                content: query
+                            }
+                        ],
+                        response_format: { type: "json_object" }
+                    })
                 });
 
-                if (error) throw error;
-
-                if (data) {
-                    items[index].name = data.name || query;
-                    items[index].category = data.category || 'Épicerie';
-                    items[index].qty = data.qty || '1';
-                    items[index].price = data.price || 1.00;
+                const data = await response.json();
+                if (data.choices && data.choices[0]) {
+                    const result = JSON.parse(data.choices[0].message.content);
+                    items[index].name = result.name || query;
+                    items[index].category = result.category || 'Épicerie';
+                    items[index].qty = result.qty || '1';
+                    items[index].price = result.price || 1.00;
                     
                     statusSpan.textContent = "✨ OK";
                     setTimeout(() => statusSpan.textContent = "", 1500);
                     render();
                 }
             } catch (err) {
-                console.error("Erreur IA Supabase:", err);
-                statusSpan.textContent = "";
+                console.error("Erreur IA:", err);
+                statusSpan.textContent = "❌";
+                setTimeout(() => statusSpan.textContent = "", 1500);
             }
         }
 
