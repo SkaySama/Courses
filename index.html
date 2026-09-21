@@ -334,7 +334,6 @@
         const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         const categoriesList = ['Fruits & Légumes', 'Frais & Boucherie', 'Épicerie', 'Boissons', 'Entretien & Hygiene', 'Divers'];
 
-        // Catalogue local de base (E.Leclerc / Intermarché)
         const productCatalog = [
             { name: 'Eco+ - Œufs x6', category: 'Frais & Boucherie', price: 1.65, qty: '6 p.' },
             { name: 'Marque Repère - Lait demi-écrémé (Pack 1L)', category: 'Frais & Boucherie', price: 0.98, qty: '1L' },
@@ -352,7 +351,6 @@
 
         let items = [];
 
-        // Gestion de la clé API stockée en local (zéro alerte GitHub)
         function getGroqKey() {
             let key = localStorage.getItem('groq_api_key');
             if (!key) {
@@ -455,13 +453,11 @@
             renderMetrics();
         }
 
-        // Normaliseur intelligent (accents + gestion oe / œ pour "oeuf")
         function normalizeStr(str) {
             if (!str) return '';
             return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/oe/g, "œ");
         }
 
-        // Recherche instantanée dans le catalogue local
         function handleSearchInput(index, query) {
             items[index].name = query;
             renderMetrics();
@@ -497,7 +493,6 @@
             render();
         }
 
-        // Appel direct à l'IA de Groq sécurisé via le navigateur
         async function triggerAI(index, query) {
             if (!query || query.trim().length < 2) return;
             
@@ -515,7 +510,7 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        model: 'llama-3.3-70b-versatile',
+                        model: 'llama-3.1-8b-instant', // Modèle mis à jour et actif
                         messages: [
                             {
                                 role: 'system',
@@ -541,15 +536,16 @@
                     statusSpan.textContent = "✨ OK";
                     setTimeout(() => statusSpan.textContent = "", 1500);
                     render();
+                } else {
+                    throw new Error("Réponse vide");
                 }
             } catch (err) {
                 console.error("Erreur IA:", err);
-                statusSpan.textContent = "❌";
-                setTimeout(() => statusSpan.textContent = "", 1500);
+                statusSpan.textContent = "❌ Erreur";
+                setTimeout(() => statusSpan.textContent = "", 2000);
             }
         }
 
-        // Déclencheur automatique de l'IA quand on quitte le champ de texte
         document.addEventListener('blur', (e) => {
             if (e.target.classList.contains('item-name')) {
                 const idx = e.target.id.split('-').pop();
@@ -558,7 +554,6 @@
             }
         }, true);
 
-        // Fermer les suggestions au clic extérieur
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.item-top')) {
                 document.querySelectorAll('.suggestions-box').forEach(b => b.classList.add('hidden'));
