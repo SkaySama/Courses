@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liste de Courses Intelligente & Suggestions</title>
+    <title>Liste de Courses IA & Leclerc/Intermarché</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     
@@ -174,7 +174,6 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            position: relative;
         }
 
         .item-bottom {
@@ -206,36 +205,6 @@
         .input-num { text-align: right; font-family: var(--ff-mono); }
         .input-checkbox { width: 22px; height: 22px; cursor: pointer; accent-color: var(--primary); flex-shrink: 0; }
 
-        /* Style pour les suggestions automatiques */
-        .suggestions-box {
-            position: absolute;
-            top: 100%;
-            left: 32px;
-            right: 0;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            z-index: 50;
-            max-height: 200px;
-            overflow-y: auto;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5);
-        }
-
-        .suggestion-item {
-            padding: 8px 12px;
-            font-size: 13px;
-            cursor: pointer;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .suggestion-item:hover {
-            background: var(--surface-hover);
-            color: var(--primary);
-        }
-
         .btn {
             display: inline-flex;
             align-items: center;
@@ -258,6 +227,13 @@
 
         .actions-bar { display: flex; gap: 8px; margin-top: 4px; }
         .actions-bar .btn { flex: 1; }
+        
+        .ai-loading {
+            font-size: 12px;
+            color: var(--primary);
+            font-style: italic;
+            margin-left: 8px;
+        }
     </style>
 </head>
 <body>
@@ -283,7 +259,7 @@
     <div id="app-container" class="container hidden">
         <header>
             <div>
-                <h1>🛒 Ma Liste de Courses</h1>
+                <h1>🛒 Ma Liste IA (Leclerc / Intermarché)</h1>
                 <div class="subtitle" id="user-display">Connecté</div>
             </div>
             <div style="display: flex; gap: 6px;">
@@ -327,38 +303,14 @@
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1dW9lZWpkbXppdGpwc3ZoaG15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5OTA2MTQsImV4cCI6MjEwNTU2NjYxNH0.JO0r78pD5cqOa0ZYwr_4W0CHM3tcKRzCWjgfcqCjqlg";
 
         const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
         const categoriesList = ['Fruits & Légumes', 'Frais & Boucherie', 'Épicerie', 'Boissons', 'Entretien & Hygiene', 'Divers'];
-
-        // Catalogue local axé prioritairement sur E.Leclerc (Marque Repère / Eco+) et Intermarché (Paturages / Monique Ranou)
-        const productCatalog = [
-            { name: 'Marque Repère - Lait demi-écrémé (Pack)', category: 'Frais & Boucherie', price: 1.15, qty: '1L' },
-            { name: 'Eco+ - Œufs x6', category: 'Frais & Boucherie', price: 1.65, qty: '6 p.' },
-            { name: 'Éco+ - Pâtes Coquillettes', category: 'Épicerie', price: 0.75, qty: '1 kg' },
-            { name: 'Marque Repère - Riz basmati', category: 'Épicerie', price: 1.85, qty: '1 kg' },
-            { name: 'Cristaline - Eau de source (Pack)', category: 'Boissons', price: 1.60, qty: '6x1.5L' },
-            { name: 'Monique Ranou - Poulet escalopes', category: 'Frais & Boucherie', price: 6.20, qty: '500g' },
-            { name: 'Monique Ranou - Steaks hachés 15% MG', category: 'Frais & Boucherie', price: 4.50, qty: '4 p.' },
-            { name: 'Marque Repère - Papier toilette compact', category: 'Entretien & Hygiene', price: 3.50, qty: '6 rouleaux' },
-            { name: 'Marque Repère - Café moulu Arabica', category: 'Épicerie', price: 3.80, qty: '250g' },
-            { name: 'Paturages - Beurre doux', category: 'Frais & Boucherie', price: 2.15, qty: '250g' },
-            { name: 'Paturages - Emmental râpé', category: 'Frais & Boucherie', price: 1.89, qty: '200g' },
-            { name: 'Coca-Cola', category: 'Boissons', price: 2.30, qty: '1.5L' },
-            { name: 'Le Chat / Formil - Lessive liquide', category: 'Entretien & Hygiene', price: 6.90, qty: '1 bidon' },
-            { name: 'Bananes (Vrac)', category: 'Fruits & Légumes', price: 1.85, qty: '1 kg' },
-            { name: 'Tomates rondes', category: 'Fruits & Légumes', price: 2.40, qty: '1 kg' },
-            { name: 'Salade Laitue', category: 'Fruits & Légumes', price: 1.10, qty: '1 pièce' }
-        ];
 
         const defaultItems = [
             { id: 1, name: 'Marque Repère - Lait demi-écrémé (Pack)', category: 'Frais & Boucherie', qty: '1L', price: 1.15, checked: false },
-            { id: 2, name: 'Eco+ - Œufs x6', category: 'Frais & Boucherie', qty: '6 p.', price: 1.65, checked: false },
-            { id: 3, name: 'Éco+ - Pâtes Coquillettes', category: 'Épicerie', qty: '1 kg', price: 0.75, checked: true },
-            { id: 4, name: 'Cristaline - Eau de source (Pack)', category: 'Boissons', qty: '6x1.5L', price: 1.60, checked: false }
+            { id: 2, name: 'Eco+ - Œufs x6', category: 'Frais & Boucherie', qty: '6 p.', price: 1.65, checked: false }
         ];
 
         let items = [];
-        let searchTimeouts = {};
 
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -367,7 +319,6 @@
             const errDiv = document.getElementById('login-error');
 
             errDiv.textContent = "Connexion...";
-
             const { data, error } = await sbClient.auth.signInWithPassword({ email, password });
 
             if (error) {
@@ -389,13 +340,7 @@
             document.getElementById('user-display').textContent = user.email.split('@')[0];
 
             const { data } = await sbClient.from('patrimoine').select('data').maybeSingle();
-
-            if (data && data.data && Array.isArray(data.data)) {
-                items = data.data;
-            } else {
-                items = JSON.parse(JSON.stringify(defaultItems));
-            }
-
+            items = (data && data.data && Array.isArray(data.data)) ? data.data : JSON.parse(JSON.stringify(defaultItems));
             render();
         }
 
@@ -408,21 +353,13 @@
                 data: items
             }, { onConflict: 'user_id' });
 
-            if (error) {
-                alert("Erreur de sauvegarde.");
-            } else {
-                alert("Sauvegardé !");
-            }
+            if (error) alert("Erreur de sauvegarde.");
+            else alert("Sauvegardé !");
         }
 
         const fmt = (val) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(val);
 
         function render() {
-            renderList();
-            renderMetrics();
-        }
-
-        function renderList() {
             const container = document.getElementById('items-list-container');
             container.innerHTML = '';
 
@@ -437,10 +374,8 @@
                 div.innerHTML = `
                     <div class="item-top">
                         <input type="checkbox" class="input-checkbox" ${item.checked ? 'checked' : ''} onchange="toggleCheck(${idx}, this.checked)">
-                        <div style="position:relative; width: 100%;">
-                            <input type="text" class="input-text item-name" id="name-input-${idx}" value="${escapeHtml(item.name)}" placeholder="Commencer à écrire (ex: oeuf, lait...)" oninput="handleInputSearch(${idx}, this.value)" onfocus="handleInputSearch(${idx}, this.value)" autocomplete="off">
-                            <div class="suggestions-box hidden" id="suggestions-${idx}"></div>
-                        </div>
+                        <input type="text" class="input-text item-name" id="name-input-${idx}" value="${escapeHtml(item.name)}" placeholder="Ex: oeuf, coca, pain..." onchange="handleItemBlur(${idx}, this.value)">
+                        <span id="ai-status-${idx}" class="ai-loading"></span>
                     </div>
                     <div class="item-bottom">
                         <select class="input-select" id="cat-input-${idx}" onchange="updateItem(${idx}, 'category', this.value)">
@@ -453,110 +388,39 @@
                 `;
                 container.appendChild(div);
             });
-        }
-
-        // Normaliseur intelligent (accents + gestion oe / œ)
-        function normalizeString(str) {
-            if (!str) return '';
-            return str.toLowerCase()
-                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-                .replace(/oe/g, "œ");
-        }
-
-        // Détection automatique de la pré-catégorie selon le texte saisi
-        function detectCategory(name) {
-            const n = normalizeString(name);
-            if (n.match(/lait|oeuf|œuf|beurre|fromage|yaourt|creme|steak|poulet|jambon|viande|boucherie|lardons|surimi/)) return 'Frais & Boucherie';
-            if (n.match(/pomme|banane|salade|tomate|carotte|legume|fruit|avocat|oignon|courgette|poivron/)) return 'Fruits & Légumes';
-            if (n.match(/eau|coca|soda|jus|biere|vin|boisson|sirop|limonade|schweppes/)) return 'Boissons';
-            if (n.match(/papier|lessive|savon|shampoing|dentifrice|gel|nettoyant|eponge|sac poubelle|vaisselle/)) return 'Entretien & Hygiene';
-            if (n.match(/patte|pate|riz|cafe|sucre|farine|cereale|huile|chocolat|biscuits|conserve|sel/)) return 'Épicerie';
-            return 'Épicerie'; // Défaut
-        }
-
-        // Recherche rapide locale + API ultra-réactive
-        function handleInputSearch(index, query) {
-            items[index].name = query;
-            // Pré-catégorisation dynamique à la volée
-            items[index].category = detectCategory(query);
-            document.getElementById(`cat-input-${index}`).value = items[index].category;
             renderMetrics();
+        }
 
-            const box = document.getElementById(`suggestions-${index}`);
-            if (!query || query.trim().length < 2) {
-                box.classList.add('hidden');
-                return;
-            }
+        // Fonction déclenchée quand on finit de taper un produit -> L'IA analyse et remplit tout seule !
+        async function handleItemBlur(index, query) {
+            if (!query || query.trim().length < 2) return;
+            
+            const statusSpan = document.getElementById(`ai-status-${index}`);
+            statusSpan.textContent = "🤖 Analyse IA...";
 
-            const cleanQ = normalizeString(query);
+            try {
+                // Appel sécurisé vers la fonction Edge Supabase
+                const { data, error } = await sbClient.functions.invoke('ai-parse-item', {
+                    body: { query }
+                });
 
-            // Filtrage local prioritaire
-            const localMatches = productCatalog.filter(p => normalizeString(p.name).includes(cleanQ));
+                if (error) throw error;
 
-            let htmlContent = localMatches.map(m => `
-                <div class="suggestion-item" onclick="selectSuggestion(${index}, '${escapeHtml(m.name).replace(/'/g, "\\'")}', '${m.category}', ${m.price}, '${m.qty}')">
-                    <span>⭐ <strong>${m.name}</strong> <span style="color:var(--text-muted); font-size:11px;">(${m.category})</span></span>
-                </div>
-            `).join('');
-
-            if (localMatches.length > 0) {
-                box.innerHTML = htmlContent;
-                box.classList.remove('hidden');
-            } else {
-                box.innerHTML = '<div class="suggestion-item" style="color:var(--text-muted); cursor:default;">Recherche rapide en ligne...</div>';
-                box.classList.remove('hidden');
-            }
-
-            // API Open Food Facts optimisée et rapide (debounce abaissé à 200ms)
-            clearTimeout(searchTimeouts[index]);
-            searchTimeouts[index] = setTimeout(async () => {
-                try {
-                    const url = `https://fr.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(cleanQ)}&search_simple=1&action=process&json=1&page_size=5`;
-                    const response = await fetch(url);
-                    const data = await response.json();
-
-                    if (data.products && data.products.length > 0) {
-                        const apiMatchesHtml = data.products.map(prod => {
-                            const pName = prod.product_name_fr || prod.product_name;
-                            if (!pName) return '';
-                            const brand = prod.brands ? `(${prod.brands})` : '';
-                            const img = prod.image_small_url ? `<img src="${prod.image_small_url}" width="24" height="24" style="object-fit:contain; border-radius:4px;">` : '🛒';
-                            const guessedCat = detectCategory(pName);
-                            
-                            return `
-                                <div class="suggestion-item" onclick="selectSuggestion(${index}, '${escapeHtml(pName + ' ' + brand).replace(/'/g, "\\'")}', '${guessedCat}', 2.00, '1')">
-                                    ${img} <span>${pName} <span style="color:var(--text-muted); font-size:11px;">${brand}</span></span>
-                                </div>
-                            `;
-                        }).join('');
-
-                        if (apiMatchesHtml) {
-                            box.innerHTML = htmlContent + '<div style="border-top:1px solid var(--border); font-size:10px; color:var(--text-muted); padding:4px 8px; text-transform:uppercase;">Suggestions en ligne</div>' + apiMatchesHtml;
-                            box.classList.remove('hidden');
-                        }
-                    }
-                } catch (e) {
-                    console.error("Erreur API:", e);
+                if (data) {
+                    items[index].name = data.name || query;
+                    items[index].category = data.category || 'Épicerie';
+                    items[index].qty = data.qty || '1';
+                    items[index].price = data.price || 1.00;
+                    statusSpan.textContent = "✨ Mis à jour";
+                    setTimeout(() => statusSpan.textContent = "", 2000);
+                    render();
                 }
-            }, 200);
-        }
-
-        function selectSuggestion(index, name, category, price, qty) {
-            items[index].name = name;
-            items[index].category = category;
-            if (price) items[index].price = price;
-            if (qty) items[index].qty = qty;
-
-            document.getElementById(`suggestions-${index}`).classList.add('hidden');
-            render();
-        }
-
-        // Fermer les suggestions si on clique ailleurs
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.item-top')) {
-                document.querySelectorAll('.suggestions-box').forEach(b => b.classList.add('hidden'));
+            } catch (err) {
+                console.error("Erreur IA:", err);
+                statusSpan.textContent = "❌ Erreur";
+                setTimeout(() => statusSpan.textContent = "", 2000);
             }
-        });
+        }
 
         function renderMetrics() {
             const totalEst = items.reduce((sum, item) => sum + (item.price || 0), 0);
@@ -565,7 +429,6 @@
 
             document.getElementById('total-est').textContent = fmt(totalEst);
             document.getElementById('items-count').textContent = `${items.length} articles`;
-            
             document.getElementById('total-checked').textContent = fmt(checkedTotal);
             document.getElementById('checked-count').textContent = `${checkedItems.length} / ${items.length} pris`;
         }
@@ -594,11 +457,6 @@
 
         function deleteRow(index) {
             items.splice(index, 1);
-            render();
-        }
-
-        function clearChecked() {
-            items = items.filter(i => !i.checked);
             render();
         }
 
