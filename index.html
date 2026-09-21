@@ -510,7 +510,7 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        model: 'llama-3.1-8b-instant', // Modèle actif validé sur l'API Groq
+                        model: 'llama-3.1-8b-instant',
                         messages: [
                             {
                                 role: 'system',
@@ -561,7 +561,7 @@
         }, true);
 
         document.addEventListener('click', (e) => {
-            *if (!e.target.closest('.item-top')) {
+            if (!e.target.closest('.item-top')) {
                 document.querySelectorAll('.suggestions-box').forEach(b => b.classList.add('hidden'));
             }
         });
